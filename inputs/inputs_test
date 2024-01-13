@@ -1,0 +1,112 @@
+hipace.file_prefix  = hdf5
+beams.insitu_file_prefix = insitu
+plasmas.insitu_file_prefix = insitu
+
+my_constants.ref_ratio = 12
+my_constants.patch_size = 32 / 511 * 255 / ref_ratio / 2 # box size on level 0 / nx level 0 * nx level 1 * refinement ratio / 2 because patch size +-
+my_constants.r = patch_size * 1.5
+my_constants.n0 = 1.
+hipace.background_density_SI = 1e23
+
+amr.n_cell = 511 511 512 # 4095 4095 8*1920
+
+hipace.normalized_units = 1
+hipace.verbose = 1
+
+diagnostic.diag_type = xz
+diagnostic.field_data = Bx By Bz ExmBy EypBx Ez jx jx_beam jy jy_beam jz_beam rho
+diagnostic.beam_output_period = 2 # 00 
+amr.max_level = 1
+
+amrex.the_arena_is_managed = 1
+
+max_step = 0
+hipace.dt = adaptive
+hipace.nt_per_betatron = 150
+diagnostic.output_period = 10
+hipace.deposit_rho = 1
+hipace.deposit_rho_individual = 1
+hipace.depos_order_xy = 2
+
+geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.is_periodic = 1     1     0      # Is periodic?
+geometry.prob_lo     = -16.   -16.   -18    # physical domain
+geometry.prob_hi     =  16.    16.    6
+
+mr_lev1.n_cell = 255 255 # 1023 1023
+mr_lev1.patch_lo = -patch_size -patch_size -18
+mr_lev1.patch_hi =  patch_size patch_size   6
+
+beams.names = drive witness recovery
+beams.insitu_period = 1
+
+my_constants.drive_u = 58708.5355072162 # 30 GeV/c
+drive.profile = gaussian
+drive.injection_type = fixed_weight
+drive.do_symmetrize = 1
+drive.num_particles = 1e6 # 00
+drive.density = 200
+drive.u_std =  "0.1*sqrt(drive_u/2.)" "0.1*sqrt(drive_u/2.)"  0.
+drive.u_mean = 0. 0. drive_u
+drive.position_std = 0.1 0.1 1.41
+drive.position_mean = 0.0 0. 0
+
+recovery.profile = gaussian # can
+recovery.injection_type = fixed_weight # from_file
+#recovery.input_file = diags/hdf5/filamentRSFront/openpmd_%T.h5
+#recovery.openPMD_species_name = recovery
+#recovery.iteration = 0
+recovery.do_symmetrize = 1
+recovery.num_particles = 1.5e6
+recovery.density = 1600
+recovery.u_mean = 0. 0. 2000 # ~ 1 GeV/c
+recovery.u_std = 1.5868295405528448 1.5868295405528448 0.
+recovery.position_mean = 0.0 0. -7.5
+recovery.position_std = 0.05 0.05 0.25 # rms beam size
+#recovery.zmin = -8.65
+#recovery.zmax = -7.55
+#recovery.do_salame = 1
+
+witness.injection_type = fixed_weight
+witness.profile = gaussian # can
+#witness.input_file = /home/mvarvera/HiPACE++/diags/hdf5/filamentWS/openpmd_%T.h5
+#witness.openPMD_species_name = witness
+#witness.iteration = 0
+witness.num_particles = 2e6 # 00
+witness.element = positron
+witness.density = (0.0125 / 0.0026)**2 * 2000
+witness.u_std = 0.75 0.75 0
+witness.u_mean = 0. 0. 2000 # ~ 1 GeV/c
+witness.position_std = 0.0026 0.0026 0.5
+witness.position_mean = 0.0 0.0 -13.45
+witness.do_symmetrize = 1
+witness.n_subcycles = 10
+#witness.zmin = -12.
+#witness.zmax = -15.
+#witness.do_salame = 1
+
+plasmas.names = electrons ions
+plasmas.neutralize_background = 0
+# plasmas.reorder_period = 4 # for GPU's only!
+
+electrons.element = electron
+electrons.density(x,y,z) = n0
+electrons.radius = 2.5
+electrons.ppc = 1 1
+electrons.fine_ppc = ref_ratio ref_ratio
+electrons.fine_transition_cells = 2 # 10
+electrons.fine_patch(x,y) =  "sqrt(x^2^2+y^2^2) < r"
+electrons.do_symmetrize = 1
+electrons.temperature_in_ev = 50
+
+ions.element = He
+ions.ppc = 1 1
+ions.radius = 2.5
+ions.ionization_product = electrons
+ions.initial_ion_level = 1
+ions.density(x,y,z) = n0
+ions.fine_ppc = 4*ref_ratio 4*ref_ratio
+ions.fine_transition_cells = 2 # 10
+ions.fine_patch(x,y) = "sqrt(x^2^2+y^2^2) < r"
+ions.temperature_in_ev = 0
+
